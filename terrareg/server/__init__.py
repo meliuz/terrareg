@@ -6,6 +6,7 @@ from flask import Flask, session, redirect, request
 from flask_restful import Api
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
+from waitress import serve
 
 import terrareg.config
 import terrareg.database
@@ -122,11 +123,19 @@ class Server(BaseHandler):
 
         self._app.config['UPLOAD_FOLDER'] = self._get_upload_directory()
 
+        self._app.config['SESSION_TYPE'] = 'filesystem'
+
         # Initialise database
         terrareg.database.Database.get().initialise()
         terrareg.models.GitProvider.initialise_from_config()
 
+        secret_key = os.environ.get('SECRET_KEY')
+
+        self._app.secret_key = secret_key
+
         self._register_routes()
+
+        serve(self._app, host=self.host, port=self.port)
 
     def _get_upload_directory(self):
         return os.path.join(terrareg.config.Config().DATA_DIRECTORY, 'upload')
@@ -503,8 +512,6 @@ class Server(BaseHandler):
         }
         if self.ssl_public_key and self.ssl_private_key:
             kwargs['ssl_context'] = (self.ssl_public_key, self.ssl_private_key)
-
-        self._app.secret_key = terrareg.config.Config().SECRET_KEY
 
         self._app.run(**kwargs)
 
