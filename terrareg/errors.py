@@ -214,3 +214,8 @@ class DuplicateNamespaceDisplayNameError(TerraregError):
     """A namespace already exists with this display name"""
 
     pass
+
+class NamespaceNotEmptyError(TerraregError):
+    """Namespace cannot be deleted due to containing modules"""
+
+    pass
